@@ -1,0 +1,417 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Roast {
+  GREEN
+  LIGHT
+  MEDIUM
+  MEDIUM_DARK
+  DARK
+}
+
+enum Grind {
+  BEANS
+  COARSE
+  MEDIUM_COARSE
+  MEDIUM
+  MEDIUM_FINE
+  FINE
+  EXTRA_FINE
+}
+
+enum Status{
+  OPEN 
+  PAID
+  SENT
+  DELIVERED
+  CANCELLED
+}
+
+enum Type{
+  PHOTO
+  VIDEO
+  DOC 
+  SOUND
+  DRAWING
+  GRAPH
+}
+
+enum RoleType{
+  ROOT
+  ADMIN
+  USER
+  CUSTOMER
+}
+
+enum ProcessType{
+  WASHED
+  NATURAL
+  HONEY
+}
+
+model User {
+  id              String    @id
+  email           String    @unique(map: "email") @db.VarChar(100)
+  passwordHash    String    @db.VarChar(255)
+  emailVerified   Boolean   @default(false)
+
+  sessions   Session[]
+  profile    Profile?
+  roles      Role[]
+  orders     Order[]
+  coupons    Coupon[]
+  comments   Comment[]
+  posts      Post[]
+  likes      Like[]
+  emailVerificationCode EmailVerificationCode?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model EmailVerificationCode{
+  id          Int  @id @default(autoincrement())
+  userId      String @unique
+  code        String
+  email       String
+  expiresAt   DateTime
+
+  user        User @relation(references: [id], fields: [userId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("email_verification_code")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("sessions")
+}
+
+model Profile {
+  id          Int  @id @default(autoincrement())
+  userId      String  @unique
+  fileId      Int?  
+  name        String?
+  description String?
+
+  avatar      File? @relation(fields: [fileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Country{
+  id          Int  @id @default(autoincrement())
+  name        String 
+
+  regions     Region[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("countries")
+}
+
+model Region{
+  id          Int  @id @default(autoincrement())
+  name        String
+  countryId   Int 
+
+  country     Country @relation(fields: [countryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cities      City[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("regions")
+}
+
+model City{
+  id          Int  @id @default(autoincrement())
+  name        String
+  regionId    Int 
+
+  origins     Origin[]
+  country     Region @relation(fields: [regionId], references: [id],onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cities")
+}
+
+model Variety{
+  id          Int  @id @default(autoincrement())
+  name        String
+  description String?
+  
+  coffees     Coffee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("varieties")
+}
+
+model Process{
+  id          Int  @id @default(autoincrement())
+  name        ProcessType
+  description String?
+
+  coffees     Coffee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("processes")
+}
+
+model Origin{
+  id          Int  @id @default(autoincrement())
+  name        String
+  msn         Int
+  description String?
+  cityId      Int
+
+  coffees     Coffee[]
+  city        City @relation(fields: [cityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("origins")
+}
+
+model Coffee{
+  id          Int  @id @default(autoincrement())
+  name        String
+  profile     String?
+  processId   Int
+  varietyId   Int
+  originId    Int
+
+  product     Product[]
+  process     Process @relation(fields: [processId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  variety     Variety @relation(fields: [varietyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  origin      Origin @relation(fields: [originId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("coffees")
+}
+
+model Product{
+  id          Int  @id @default(autoincrement())
+  name        String
+  description String?
+  roast       Roast
+  grind       Grind
+  weight      String
+  price       Float
+  grams       Int
+  coffeeId    Int
+  available   Boolean
+
+  coffee      Coffee @relation(fields: [coffeeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  orders      Order[]
+  files       File[]
+  coupons     Coupon[]
+  likes       Like[]
+  comments    Comment[]
+  methods     Method[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Method{
+  id          Int  @id @default(autoincrement())
+  name        String
+  description String?
+  grind       Grind
+
+  products    Product[]
+  likes       Like[]
+  comments    Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("methods")
+}
+
+
+
+model Tag{
+  id          Int  @id @default(autoincrement())
+  name        String
+
+  posts      Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tags")
+}
+
+model Category{
+  id          Int  @id @default(autoincrement())
+  name        String
+  description String
+  available   Boolean
+
+  posts      Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+
+model Post{
+  id          Int  @id @default(autoincrement())
+  authorId    String
+  categoryId  Int
+  title       String
+  content     String
+
+  files       File[]
+  comments    Comment[]
+  likes       Like[]
+  tags        Tag[]
+
+  author      User @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+model Order{
+  id          Int  @id @default(autoincrement())
+  userId      String
+  status      Status @default(OPEN)
+
+  products    Product[]
+  coupons     Coupon[]
+  client      User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model Role{
+  id          Int  @id @default(autoincrement())
+  name        RoleType @default(USER)
+  description String?
+
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model File{
+  id          Int  @id @default(autoincrement())
+  mimeId      Int
+  name        String
+
+  posts       Post[]
+  product     Product[]
+  profiles    Profile[]
+  mime        Mime @relation(fields: [mimeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("files")
+}
+
+model Mime{
+  id          Int  @id @default(autoincrement())
+  name        String
+  class       Type
+
+  files       File[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mimes")
+}
+
+model Coupon{
+  id          Int  @id @default(autoincrement())
+  name        String
+  description String?
+  discount    String
+  limit       Int @default(0)
+  
+  products    Product[]
+  orders      Order[]
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("coupons")
+}
+
+model Like{
+  id          Int  @id @default(autoincrement())
+  userId      String
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  posts       Post[]
+  products    Product[]
+  methods     Method[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("likes")
+}
+
+
+model Comment{
+  id          Int  @id @default(autoincrement())
+  userId      String
+  text        String
+
+  posts       Post[]
+  products    Product[]
+  method      Method[]
+
+  author     User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
+}

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  nuxt_app:
+    build: .
+    container_name: nuxt_app
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL="mysql://${DB_USER}:${DB_ROOT_PASSWORD}@db:${DB_PORT}/${DB_NAME}"
+
+    depends_on:
+      - db
+    volumes:
+      - ./:/app
+
+    networks:
+      - app-network
+    restart: always
+    command: "npm run dev"
+
+  db:
+    image: mysql:8
+    container_name: mysql_db
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PORT: ${DB_PORT}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app-network
+    restart: always
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
