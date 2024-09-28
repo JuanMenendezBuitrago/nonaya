@@ -1,4 +1,5 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import svgLoader                       from 'vite-svg-loader'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
@@ -37,6 +38,13 @@ export default defineNuxtConfig({
     //...
   ],
   vite: {
+    plugins: [
+      svgLoader({
+        svgoConfig: {
+          multipass: true,
+        },
+      }),
+    ],
     vue: {
       template: {
         transformAssetUrls,
