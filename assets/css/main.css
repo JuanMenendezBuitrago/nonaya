@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    font-family: "Urbanist", system-ui;
+}
+.urbanist-thin {
+    font-optical-sizing: auto;
+    font-weight: 100;
+    font-style: normal;
+}
+
+.urbanist-light {
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+}
+
+.urbanist-regular {
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.urbanist-bold{
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
+.urbanist-black{
+    font-optical-sizing: auto;
+    font-weight: 900;
+    font-style: normal;
+}
