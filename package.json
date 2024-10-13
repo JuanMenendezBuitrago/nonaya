@@ -24,13 +24,16 @@
     "nodemailer": "^6.9.15",
     "nuxt": "^3.12.4",
     "oslo": "^1.2.1",
-    "vue": "latest"
+    "pinia": "^2.2.4",
+    "vue": "^3.5.11"
   },
   "devDependencies": {
     "@types/node": "^22.6.1",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.40",
     "prisma": "^5.19.1",
+    "sass": "^1.79.5",
+    "sass-loader": "^16.0.2",
     "tailwindcss": "^3.4.7",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
