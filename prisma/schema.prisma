@@ -8,52 +8,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Roast {
-  GREEN
-  LIGHT
-  MEDIUM
-  MEDIUM_DARK
-  DARK
-}
-
-enum Grind {
-  BEANS
-  COARSE
-  MEDIUM_COARSE
-  MEDIUM
-  MEDIUM_FINE
-  FINE
-  EXTRA_FINE
-}
-
-enum Status{
-  OPEN 
-  PAID
-  SENT
-  DELIVERED
-  CANCELLED
-}
-
-enum Type{
-  PHOTO
-  VIDEO
-  DOC 
-  SOUND
-  DRAWING
-  GRAPH
-}
-
-enum RoleType{
-  ROOT
-  ADMIN
-  USER
-  CUSTOMER
-}
-
-enum ProcessType{
-  WASHED
-  NATURAL
-  HONEY
+enum CouponType {
+  PRODUCT 
+  ORDER
 }
 
 model User {
@@ -118,7 +75,7 @@ model Profile {
 
 model Country{
   id          Int  @id @default(autoincrement())
-  name        String 
+  name        String @unique
 
   regions     Region[]
 
@@ -158,7 +115,7 @@ model City{
 
 model Variety{
   id          Int  @id @default(autoincrement())
-  name        String
+  name        String @unique
   description String?
   
   coffees     Coffee[]
@@ -171,7 +128,7 @@ model Variety{
 
 model Process{
   id          Int  @id @default(autoincrement())
-  name        ProcessType
+  name        String @unique
   description String?
 
   coffees     Coffee[]
@@ -182,10 +139,23 @@ model Process{
   @@map("processes")
 }
 
+model Note{
+  id          Int  @id @default(autoincrement())
+  name        String @unique
+  description String?
+
+  products    Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notes")
+}
+
 model Origin{
   id          Int  @id @default(autoincrement())
   name        String
-  msn         Int
+  msnm        Int
   description String?
   cityId      Int
 
@@ -198,18 +168,53 @@ model Origin{
   @@map("origins")
 }
 
-model Coffee{
+model Roast {
   id          Int  @id @default(autoincrement())
-  name        String
-  profile     String?
-  processId   Int
-  varietyId   Int
-  originId    Int
+  name        String @unique
+  description String?
 
   product     Product[]
-  process     Process @relation(fields: [processId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  variety     Variety @relation(fields: [varietyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  origin      Origin @relation(fields: [originId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("roasts")
+}
+
+model Grind {
+  id          Int  @id @default(autoincrement())
+  name        String @unique
+  description String?
+
+  products    Product[]
+  methods     Method[]
+
+  @@map("grinds")
+}
+
+
+model Fermentation {
+  id          Int  @id @default(autoincrement())
+  name        String @unique
+  description String?
+
+  coffees     Coffee[]
+
+  @@map("fermentations")
+}
+
+model Coffee{
+  id              Int  @id @default(autoincrement())
+  name            String
+  description     String?
+  processId       Int?
+  varietyId       Int?
+  originId        Int?
+  fermentationId  Int?
+  fermentationHrs Int? @default(0)
+
+  product       Product[]
+  process       Process?      @relation(fields: [processId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  variety       Variety?      @relation(fields: [varietyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  origin        Origin?       @relation(fields: [originId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  fermentation  Fermentation? @relation(fields: [fermentationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,17 +224,22 @@ model Coffee{
 
 model Product{
   id          Int  @id @default(autoincrement())
+  roastId     Int?
+  grindId     Int?
   name        String
   description String?
-  roast       Roast
-  grind       Grind
   weight      String
   price       Float
   grams       Int
   coffeeId    Int
+  roastDate   DateTime?
   available   Boolean
 
+  notes       Note[]
+  grind       Grind? @relation(fields: [grindId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  roast       Roast? @relation(fields: [roastId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   coffee      Coffee @relation(fields: [coffeeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  
   orders      Order[]
   files       File[]
   coupons     Coupon[]
@@ -245,13 +255,14 @@ model Product{
 
 model Method{
   id          Int  @id @default(autoincrement())
-  name        String
+  name        String @unique
   description String?
-  grind       Grind
+  grindId     Int?
 
   products    Product[]
   likes       Like[]
   comments    Comment[]
+  grind       Grind? @relation(fields: [grindId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -263,7 +274,7 @@ model Method{
 
 model Tag{
   id          Int  @id @default(autoincrement())
-  name        String
+  name        String @unique
 
   posts      Post[]
 
@@ -275,8 +286,8 @@ model Tag{
 
 model Category{
   id          Int  @id @default(autoincrement())
-  name        String
-  description String
+  name        String @unique
+  description String?
   available   Boolean
 
   posts      Post[]
@@ -309,13 +320,24 @@ model Post{
   @@map("posts")
 }
 
+model Status {
+  id          Int  @id @default(autoincrement())
+  name        String @unique
+  description String?
+
+  orders      Order[]
+
+  @@map("status")
+}
+
 model Order{
   id          Int  @id @default(autoincrement())
   userId      String
-  status      Status @default(OPEN)
+  statusId    Int?
 
   products    Product[]
   coupons     Coupon[]
+  status      Status? @relation(fields: [statusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   client      User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   createdAt DateTime @default(now())
@@ -326,7 +348,7 @@ model Order{
 
 model Role{
   id          Int  @id @default(autoincrement())
-  name        RoleType @default(USER)
+  name        String @unique
   description String?
 
   users       User[]
@@ -355,8 +377,7 @@ model File{
 
 model Mime{
   id          Int  @id @default(autoincrement())
-  name        String
-  class       Type
+  name        String @unique
 
   files       File[]
 
@@ -368,8 +389,9 @@ model Mime{
 
 model Coupon{
   id          Int  @id @default(autoincrement())
-  name        String
+  name        String 
   description String?
+  type        CouponType
   discount    String
   limit       Int @default(0)
   
@@ -414,4 +436,15 @@ model Comment{
   updatedAt DateTime @updatedAt
 
   @@map("comments")
+}
+
+model Admin{
+  id          Int  @id @default(autoincrement())
+  name      String
+  value        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin")
 }
