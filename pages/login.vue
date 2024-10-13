@@ -1,5 +1,8 @@
 <!--pages/login.vue-->
 <script lang="ts" setup>
+
+import LogoIcon from '~/assets/svg/logo-mono-black.svg'
+
 async function login(e: Event) {
 	await $fetch("/api/login", {
 		method: "POST",
