@@ -19,7 +19,7 @@ export default eventHandler(async (event) => {
 			status: 400
 		});
 	}
-
+	
 	const passwordHash = await hash(password, {
 		// recommended minimum parameters
 		memoryCost: 19456,
